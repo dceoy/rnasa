@@ -1,0 +1,17 @@
+---
+version: '3'
+
+services:
+  rnasa:
+    container_name: rnasa
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: dceoy/rnasa:latest
+    user: ${UID}:${GID}
+    userns_mode: host
+    volumes:
+      - .:/wd
+    working_dir: /wd
+    entrypoint:
+      - rnasa
