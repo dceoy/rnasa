@@ -2,9 +2,11 @@
 
 import sys
 from pathlib import Path
+from random import randint
 from socket import gethostname
 
 import luigi
+from ftarc.task.trimgalore import PrepareFastqs
 
 from .core import RnasaTask
 
@@ -39,7 +41,7 @@ class DownloadReferenceFiles(RnasaTask):
             )
 
 
-class DownloadAndPrepareRsemReferenceFiles(RnasaTask):
+class PrepareRsemReferenceFiles(RnasaTask):
     fna_url = luigi.Parameter()
     gtf_url = luigi.Parameter()
     dest_dir_path = luigi.Parameter(default='.')
@@ -50,6 +52,7 @@ class DownloadAndPrepareRsemReferenceFiles(RnasaTask):
     rsem_calculate_expression = luigi.Parameter(
         default='rsem-calculate-expression'
     )
+    perl = luigi.Parameter(default='perl')
     n_cpu = luigi.IntParameter(default=1)
     sh_config = luigi.DictParameter(default=dict())
     priority = 10
@@ -69,11 +72,11 @@ class DownloadAndPrepareRsemReferenceFiles(RnasaTask):
                 f'{self.genome_version}.idx.fa',
                 f'{self.genome_version}.n2g.idx.fa',
                 f'{self.genome_version}.seq', f'{self.genome_version}.ti',
-                f'{self.genome_version}.transcripts.fa',
-                f'{self.genome_version}_STARtmp', 'Log.out', 'chrLength.txt',
-                'chrName.txt', 'chrNameLength.txt', 'chrStart.txt',
-                'exonGeTrInfo.tab', 'exonInfo.tab', 'geneInfo.tab',
-                'sjdbList.fromGTF.out.tab', 'transcriptInfo.tab'
+                f'{self.genome_version}.transcripts.fa', 'Log.out',
+                'chrLength.txt', 'chrName.txt', 'chrNameLength.txt',
+                'chrStart.txt', 'exonGeTrInfo.tab', 'exonInfo.tab',
+                'geneInfo.tab', 'sjdbList.fromGTF.out.tab',
+                'transcriptInfo.tab'
             ]
         ]
 
@@ -89,7 +92,7 @@ class DownloadAndPrepareRsemReferenceFiles(RnasaTask):
         gtf = dest_dir.joinpath(
             gtf_gz.stem if gtf_gz.suffix == '.gz' else gtf_gz.name
         )
-        ref_prefix = str(dest_dir.joinpath(f'rsem.star.{self.genome_version}'))
+        ref_prefix = str(dest_dir.joinpath(self.genome_version))
         bin_dir = Path(self.rsem_calculate_expression).resolve().parent
         rsem_refseq_extract_primary_assembly = bin_dir.joinpath(
             'rsem-refseq-extract-primary-assembly'
@@ -99,7 +102,7 @@ class DownloadAndPrepareRsemReferenceFiles(RnasaTask):
             run_id=run_id,
             commands=[
                 self.rsem_calculate_expression, self.star, self.pigz,
-                sys.executable
+                sys.executable, self.perl
             ],
             cwd=dest_dir, **self.sh_config
         )
@@ -123,11 +126,12 @@ class DownloadAndPrepareRsemReferenceFiles(RnasaTask):
         self.run_shell(
             args=(
                 f'set -e && {rsem_prepare_reference}'
-                + f'--star --num-threads {self.n_cpu}'
+                + ' --star'
+                + f' --num-threads {self.n_cpu}'
                 + f' --gtf {gtf}'
                 + f' {pa_fna} {ref_prefix}'
             ),
-            input_files_or_dirs=pa_fna,
+            input_files_or_dirs=[pa_fna, gtf],
             output_files_or_dirs=[o.path for o in self.output()]
         )
         for o in {fna, gtf, pa_fna}:
@@ -138,6 +142,85 @@ class DownloadAndPrepareRsemReferenceFiles(RnasaTask):
                     args=f'set -e && {self.pigz} -p {self.n_cpu} {o}',
                     input_files_or_dirs=o, output_files_or_dirs=f'{o}.gz'
                 )
+
+
+class CalculateTpmWithRsem(RnasaTask):
+    fq_paths = luigi.ListParameter()
+    ref_prefix = luigi.Parameter()
+    dest_dir_path = luigi.Parameter(default='.')
+    adapter_removal = luigi.BoolParameter(default=True)
+    seed = luigi.IntParameter(default=randint(0, 2147483647))
+    pigz = luigi.Parameter(default='pigz')
+    pbzip2 = luigi.Parameter(default='pbzip2')
+    trim_galore = luigi.Parameter(default='trim_galore')
+    cutadapt = luigi.Parameter(default='cutadapt')
+    fastqc = luigi.Parameter(default='fastqc')
+    rsem_calculate_expression = luigi.Parameter(
+        default='rsem-calculate-expression'
+    )
+    n_cpu = luigi.IntParameter(default=1)
+    memory_mb = luigi.FloatParameter(default=4096)
+    sh_config = luigi.DictParameter(default=dict())
+    priority = 20
+
+    def requires(self):
+        dest_dir = Path(self.dest_dir_path).resolve()
+        return PrepareFastqs(
+            fq_paths=self.fq_paths,
+            sample_name=self.parse_fq_id(self.fq_paths[0]),
+            cf={
+                'adapter_removal': self.adapter_removal,
+                'trim_dir_path': str(dest_dir.joinpath('trim')),
+                'align_dir_path': str(dest_dir.joinpath('fq')),
+                'pigz': self.pigz, 'pbzip2': self.pbzip2,
+                'trim_galore': self.trim_galore, 'cutadapt': self.cutadapt,
+                'fastqc': self.fastqc
+            },
+            n_cpu=self.n_cpu, memory_mb=self.memory_mb,
+            sh_config=self.sh_config
+        )
+
+    def output(self):
+        exp_dir = Path(self.dest_dir_path).resolve().joinpath(
+            'expression'
+        ).joinpath(self.parse_fq_id(self.fq_paths[0]))
+        return luigi.LocalTarget(exp_dir)
+
+    def run(self):
+        dest_dir = Path(self.output().path)
+        run_id = dest_dir.name
+        self.print_log(f'Calculate TPM values:\t{run_id}')
+        input_fqs = [Path(i.path) for i in self.input()]
+        is_paired_end = (len(self.fq_paths) > 1)
+        map_prefix = str(dest_dir.joinpath(f'{dest_dir.name}.rsem.star'))
+        memory_mb_per_thread = int(self.memory_mb / self.n_cpu)
+        self.setup_shell(
+            run_id=run_id,
+            commands=[self.rsem_calculate_expression, self.star], cwd=dest_dir,
+            **self.sh_config
+        )
+        self.run_shell(
+            args=(
+                f'set -e && {self.rsem_calculate_expression}'
+                + ' --star'
+                + ' --estimate-rspd'
+                + ' --append-names'
+                + ' --sort-bam-by-coordinate'
+                + ' --calc-pme'
+                + ' --calc-ci'
+                + ' --time'
+                + ' --star-gzipped-read-file'
+                + f' --num-threads {self.n_cpu}'
+                + f' --sort-bam-memory-per-thread {memory_mb_per_thread}M'
+                + f' --ci-memory {memory_mb_per_thread}'
+                + f' --seed {self.seed}'
+                + (' --paired-end' if is_paired_end else '')
+                + ''.join(f' {f}' for f in input_fqs)
+                + f' {self.ref_prefix} {map_prefix}'
+            ),
+            input_files_or_dirs=input_fqs,
+            output_files_or_dirs=self.output().path
+        )
 
 
 if __name__ == '__main__':

@@ -47,7 +47,7 @@ RUN set -e \
       && make \
       && make install \
       && find \
-        /usr/local/src/STAR/bin/Linux_x86_64_static /usr/local/src/FastQC \
+        /usr/local/src/STAR/bin/Linux_x86_64 /usr/local/src/FastQC \
         /usr/local/src/TrimGalore \
         -type f -executable -exec ln -s {} /usr/local/bin \;
 
@@ -66,8 +66,8 @@ RUN set -e \
       && apt-get -y dist-upgrade \
       && apt-get -y install --no-install-recommends --no-install-suggests \
         apt-transport-https apt-utils ca-certificates curl libcurl3-gnutls \
-        libncurses5 openjdk-8-jre pbzip2 perl pigz python3 python3-distutils \
-        wget \
+        libgomp1 libncurses5 libtbb2 openjdk-8-jre pbzip2 perl pigz python3 \
+        python3-distutils wget \
       && apt-get -y autoremove \
       && apt-get clean \
       && rm -rf /var/lib/apt/lists/*

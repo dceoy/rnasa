@@ -44,7 +44,7 @@ from ftarc.cli.util import (build_luigi_tasks, fetch_executable, print_log,
 from psutil import cpu_count
 
 from .. import __version__
-from ..task.rsem import DownloadAndPrepareRsemReferenceFiles
+from ..task.rsem import PrepareRsemReferenceFiles
 
 
 def main():
@@ -80,7 +80,7 @@ def main():
         }
         build_luigi_tasks(
             tasks=[
-                DownloadAndPrepareRsemReferenceFiles(
+                PrepareRsemReferenceFiles(
                     fna_url=url_dict['genomic_fna'],
                     gtf_url=url_dict['genomic_gtf'],
                     dest_dir_path=args['--dest-dir'],
