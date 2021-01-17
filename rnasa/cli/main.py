@@ -36,12 +36,15 @@ Args:
 
 import logging
 import os
+from pathlib import Path
 
 from docopt import docopt
-from ftarc.cli.util import fetch_executable, print_log
-from psutil import cpu_count, virtual_memory
+from ftarc.cli.util import (build_luigi_tasks, fetch_executable, print_log,
+                            read_yml)
+from psutil import cpu_count
 
 from .. import __version__
+from ..task.rsem import DownloadAndPrepareRsemReferenceFiles
 
 
 def main():
@@ -58,17 +61,34 @@ def main():
     )
     logger = logging.getLogger(__name__)
     logger.debug(f'args:{os.linesep}{args}')
-    genome_versions = {'GRCh38', 'GRCh37', 'GRCm39', 'GRCm38'}
-    assert args['--genome'] in genome_versions, 'unsupprted genome version'
     print_log(f'Start the workflow of rnasa {__version__}')
     n_cpu = int(args['--cpus'] or cpu_count())
-    memory_mb = virtual_memory().total / 1024 / 1024 / 2
     sh_config = {
-        'log_dir_path': None,
-        'remove_if_failed': (not args['--skip-cleaning']), 'quiet': False,
+        'log_dir_path': args['--dest-dir'],
+        'remove_if_failed': (not args['--skip-cleaning']),
+        'quiet': (not args['--print-subprocesses']),
         'executable': fetch_executable('bash')
     }
     if args['download']:
-        pass
+        url_dict = read_yml(
+            path=Path(__file__).parent.parent.joinpath('static/urls.yml')
+        ).get(args['--genome'])
+        assert bool(url_dict), 'unsupprted genome version'
+        command_dict = {
+            c.replace('-', '_').lower(): fetch_executable(c)
+            for c in ['wget', 'pigz', 'STAR', 'rsem-calculate-expression']
+        }
+        build_luigi_tasks(
+            tasks=[
+                DownloadAndPrepareRsemReferenceFiles(
+                    fna_url=url_dict['genomic_fna'],
+                    gtf_url=url_dict['genomic_gtf'],
+                    dest_dir_path=args['--dest-dir'],
+                    genome_version=args['--genome'],
+                    **command_dict, n_cpu=n_cpu, sh_config=sh_config
+                )
+            ],
+            log_level=log_level
+        )
     elif args['run']:
         pass
