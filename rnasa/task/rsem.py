@@ -73,15 +73,17 @@ class PrepareRsemReferenceFiles(RnasaTask):
                 f'{self.genome_version}.n2g.idx.fa',
                 f'{self.genome_version}.seq', f'{self.genome_version}.ti',
                 f'{self.genome_version}.transcripts.fa', 'Log.out',
-                'chrLength.txt', 'chrName.txt', 'chrNameLength.txt',
+                'chrLength.txt', 'chrNameLength.txt', 'chrName.txt',
                 'chrStart.txt', 'exonGeTrInfo.tab', 'exonInfo.tab',
-                'geneInfo.tab', 'sjdbList.fromGTF.out.tab',
-                'transcriptInfo.tab'
+                'geneInfo.tab', 'Genome', 'genomeParameters.txt', 'Log.out',
+                'SA', 'SAindex', 'sjdbInfo.txt', 'sjdbList.fromGTF.out.tab',
+                'sjdbList.out.tab', 'transcriptInfo.tab'
             ]
         ]
 
     def run(self):
-        dest_dir = Path(self.dest_dir_path).resolve()
+        output_files = [Path(o.path) for o in self.output()]
+        dest_dir = output_files[0].parent
         fna_gz = Path(self.input()[0].path)
         fna = dest_dir.joinpath(
             fna_gz.stem if fna_gz.suffix == '.gz' else fna_gz.name
@@ -92,12 +94,12 @@ class PrepareRsemReferenceFiles(RnasaTask):
         gtf = dest_dir.joinpath(
             gtf_gz.stem if gtf_gz.suffix == '.gz' else gtf_gz.name
         )
-        ref_prefix = str(dest_dir.joinpath(self.genome_version))
         bin_dir = Path(self.rsem_calculate_expression).resolve().parent
         rsem_refseq_extract_primary_assembly = bin_dir.joinpath(
             'rsem-refseq-extract-primary-assembly'
         )
         rsem_prepare_reference = bin_dir.joinpath('rsem-prepare-reference')
+        tmp_dir = dest_dir.joinpath(f'{self.genome_version}.rsem.star')
         self.setup_shell(
             run_id=run_id,
             commands=[
@@ -123,17 +125,26 @@ class PrepareRsemReferenceFiles(RnasaTask):
             )
         else:
             pa_fna = fna
+        self.run_shell(args=f'mkdir {tmp_dir}', output_files_or_dirs=tmp_dir)
         self.run_shell(
             args=(
                 f'set -e && {rsem_prepare_reference}'
                 + ' --star'
                 + f' --num-threads {self.n_cpu}'
                 + f' --gtf {gtf}'
-                + f' {pa_fna} {ref_prefix}'
+                + f' {pa_fna}'
+                + ' {}'.format(tmp_dir.joinpath(self.genome_version))
             ),
             input_files_or_dirs=[pa_fna, gtf],
-            output_files_or_dirs=[o.path for o in self.output()]
+            output_files_or_dirs=[
+                tmp_dir, *[tmp_dir.joinpath(o.name) for o in output_files]
+            ]
         )
+        self.run_shell(
+            args=f'mv {tmp_dir}/* {dest_dir}',
+            input_files_or_dirs=tmp_dir, output_files_or_dirs=output_files
+        )
+        self.remove_files_and_dirs(tmp_dir)
         for o in {fna, gtf, pa_fna}:
             if Path(f'{o}.gz').is_file():
                 self.remove_files_and_dirs(o)
