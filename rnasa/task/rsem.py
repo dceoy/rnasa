@@ -166,6 +166,7 @@ class CalculateTpmWithRsem(RnasaTask):
     trim_galore = luigi.Parameter(default='trim_galore')
     cutadapt = luigi.Parameter(default='cutadapt')
     fastqc = luigi.Parameter(default='fastqc')
+    star = luigi.Parameter(default='STAR')
     rsem_calculate_expression = luigi.Parameter(
         default='rsem-calculate-expression'
     )

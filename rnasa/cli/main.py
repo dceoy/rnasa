@@ -8,7 +8,8 @@ Usage:
         [--dest-dir=<path>]
     rnasa run [--debug|--info] [--cpus=<int>] [--workers=<int>]
         [--skip-cleaning] [--print-subprocesses] [--seed=<int>]
-        [--dest-dir=<path>] <ref_path_prefix> <fq_path_prefix>...
+        [--skip-adapter-removal] [--skip-bam-qc] [--dest-dir=<path>]
+        <ref_path_prefix> <fq_path_prefix>...
     rnasa -h|--help
     rnasa --version
 
@@ -28,6 +29,8 @@ Options:
                             { GRCh38, GRCh37, GRCm39, GRCm38 }
     --dest-dir=<path>       Specify a destination directory path [default: .]
     --seed=<int>            Set a random seed
+    --skip-adapter-removal  Skip adapter removal
+    --skip-bam-qc           Skip BAM QC-checks
 
 Args:
     <ref_path_prefix>       RSEM reference name
@@ -36,15 +39,16 @@ Args:
 
 import logging
 import os
+from math import floor
 from pathlib import Path
 
 from docopt import docopt
 from ftarc.cli.util import (build_luigi_tasks, fetch_executable, print_log,
                             read_yml)
-from psutil import cpu_count
+from psutil import cpu_count, virtual_memory
 
 from .. import __version__
-from ..task.rsem import PrepareRsemReferenceFiles
+from ..task.rsem import PrepareRsemReferenceFiles, RunRnaseqPipeline
 
 
 def main():
@@ -91,4 +95,33 @@ def main():
             log_level=log_level
         )
     elif args['run']:
-        pass
+        n_sample = len(args['<fq_path_prefix>'])
+        memory_mb = virtual_memory().total / 1024 / 1024 / 2
+        n_worker = min(int(args['--workers']), n_cpu, n_sample)
+        kwargs = {
+            'ref_path_prefix': args['<ref_path_prefix>'],
+            'dest_dir_path': args['--dest-dir'],
+            'adapter_removal': (not args['--skip-adapter-removal']),
+            'seed': args['--seed'],
+            **{
+                c.replace('-', '_').lower(): fetch_executable(c) for c in [
+                    'pigz', 'pbzip2', 'trim_galore', 'cutadapt', 'fastqc',
+                    'STAR', 'rsem-calculate-expression', 'samtools'
+                ]
+            },
+            'samtools_qc_commands': (
+                list() if args['--skip-bam-qc']
+                else ['coverage', 'flagstat', 'idxstats', 'stats']
+            ),
+            'n_cpu': max(floor(n_cpu / n_worker), 1),
+            'memory_mb': (memory_mb / n_worker),
+            'sh_config': sh_config,
+        }
+        build_luigi_tasks(
+            tasks=[
+                RunRnaseqPipeline(fq_path_prefix=p, priority=i, **kwargs)
+                for i, p in
+                zip(range(n_sample * 100, 0, -100), args['<fq_path_prefix>'])
+            ],
+            workers=n_worker, log_level=log_level
+        )

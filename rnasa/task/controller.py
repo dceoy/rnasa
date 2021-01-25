@@ -41,14 +41,11 @@ class RunRnaseqPipeline(luigi.WrapperTask):
     trim_galore = luigi.Parameter(default='trim_galore')
     cutadapt = luigi.Parameter(default='cutadapt')
     fastqc = luigi.Parameter(default='fastqc')
+    star = luigi.Parameter(default='STAR')
     rsem_calculate_expression = luigi.Parameter(
         default='rsem-calculate-expression'
     )
-    n_cpu = luigi.IntParameter(default=1)
-    memory_mb = luigi.FloatParameter(default=4096)
-    sh_config = luigi.DictParameter(default=dict())
-    sample_name = luigi.Parameter()
-    cf = luigi.DictParameter()
+    samtools = luigi.Parameter(default='samtools')
     samtools_qc_commands = luigi.ListParameter(
         default=['coverage', 'flagstat', 'idxstats', 'stats']
     )
@@ -63,7 +60,7 @@ class RunRnaseqPipeline(luigi.WrapperTask):
             dest_dir_path=self.dest_dir_path,
             adapter_removal=self.adapter_removal, seed=self.seed,
             pigz=self.pigz, pbzip2=self.pbzip2, trim_galore=self.trim_galore,
-            cutadapt=self.cutadapt, fastqc=self.fastqc,
+            cutadapt=self.cutadapt, fastqc=self.fastqc, star=self.star,
             rsem_calculate_expression=self.rsem_calculate_expression,
             n_cpu=self.n_cpu, memory_mb=self.memory_mb,
             sh_config=self.sh_config
