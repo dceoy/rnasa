@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 
+import re
 import sys
 from pathlib import Path
 from random import randint
@@ -193,23 +194,26 @@ class CalculateTpmWithRsem(RnasaTask):
         )
 
     def output(self):
-        exp_dir = Path(self.dest_dir_path).resolve().joinpath(
-            'expression'
-        ).joinpath(self.parse_fq_id(self.fq_paths[0]))
-        return luigi.LocalTarget(exp_dir)
+        sample_prefix = self._create_sample_prefix()
+        return [
+            luigi.LocalTarget(sample_prefix + e) for e in [
+                '.isoforms.results', '.genes.results',
+                '.transcript.sorted.bam', '.transcript.sorted.bam.bai',
+                '.time', '.stat'
+            ]
+        ]
 
     def run(self):
-        dest_dir = Path(self.output().path)
-        run_id = dest_dir.name
+        sample_prefix = self._create_sample_prefix()
+        run_id = Path(sample_prefix).name
         self.print_log(f'Calculate TPM values:\t{run_id}')
         input_fqs = [Path(i.path) for i in self.input()]
         is_paired_end = (len(self.fq_paths) > 1)
-        map_prefix = str(dest_dir.joinpath(f'{dest_dir.name}.rsem.star'))
         memory_mb_per_thread = int(self.memory_mb / self.n_cpu)
         self.setup_shell(
             run_id=run_id,
-            commands=[self.rsem_calculate_expression, self.star], cwd=dest_dir,
-            **self.sh_config
+            commands=[self.rsem_calculate_expression, self.star],
+            cwd=Path(sample_prefix).parent, **self.sh_config
         )
         self.run_shell(
             args=(
@@ -227,11 +231,35 @@ class CalculateTpmWithRsem(RnasaTask):
                 + f' --ci-memory {memory_mb_per_thread}'
                 + f' --seed {self.seed}'
                 + (' --paired-end' if is_paired_end else '')
-                + ''.join(f' {f}' for f in input_fqs)
-                + f' {self.ref_prefix} {map_prefix}'
+                + ''.join(
+                    f' {f}' for f
+                    in [*input_fqs, self.ref_prefix, sample_prefix]
+                )
             ),
             input_files_or_dirs=input_fqs,
-            output_files_or_dirs=self.output().path
+            output_files_or_dirs=[o.path for o in self.output()]
+        )
+
+    def _create_sample_prefix(self):
+        return str(
+            Path(self.dest_dir_path).resolve().joinpath(
+                'expression/' + self._fetch_fq_id() + '.rsem.star'
+            )
+        )
+
+    def _fetch_fq_id(self):
+        fq_stem = Path(self.fq_paths[0]).name
+        for _ in range(3):
+            if fq_stem.endswith(('fq', 'fastq')):
+                fq_stem = Path(fq_stem).stem
+                break
+            else:
+                fq_stem = Path(fq_stem).stem
+        return (
+            re.sub(
+                r'[\._](read[12]|r[12]|[12]|[a-z0-9]+_val_[12]|r[12]_[0-9]+)$',
+                '', fq_stem, flags=re.IGNORECASE
+            ) or fq_stem
         )
 
 
