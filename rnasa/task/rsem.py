@@ -1,6 +1,5 @@
 #!/usr/bin/env python
 
-import re
 import sys
 from pathlib import Path
 from random import randint
@@ -56,7 +55,7 @@ class PrepareRsemReferenceFiles(RnasaTask):
     perl = luigi.Parameter(default='perl')
     n_cpu = luigi.IntParameter(default=1)
     sh_config = luigi.DictParameter(default=dict())
-    priority = 10
+    priority = 100
 
     def requires(self):
         return DownloadReferenceFiles(
@@ -160,6 +159,7 @@ class CalculateTpmWithRsem(RnasaTask):
     fq_paths = luigi.ListParameter()
     ref_prefix = luigi.Parameter()
     dest_dir_path = luigi.Parameter(default='.')
+    fq_dir_path = luigi.Parameter(default='.')
     adapter_removal = luigi.BoolParameter(default=True)
     seed = luigi.IntParameter(default=randint(0, 2147483647))
     pigz = luigi.Parameter(default='pigz')
@@ -174,17 +174,16 @@ class CalculateTpmWithRsem(RnasaTask):
     n_cpu = luigi.IntParameter(default=1)
     memory_mb = luigi.FloatParameter(default=4096)
     sh_config = luigi.DictParameter(default=dict())
-    priority = 20
+    priority = 100
 
     def requires(self):
-        dest_dir = Path(self.dest_dir_path).resolve()
+        fq_dir_path = str(Path(self.fq_dir_path).resolve())
         return PrepareFastqs(
             fq_paths=self.fq_paths,
             sample_name=self.parse_fq_id(self.fq_paths[0]),
             cf={
                 'adapter_removal': self.adapter_removal,
-                'trim_dir_path': str(dest_dir.joinpath('trim')),
-                'align_dir_path': str(dest_dir.joinpath('fq')),
+                'trim_dir_path': fq_dir_path, 'align_dir_path': fq_dir_path,
                 'pigz': self.pigz, 'pbzip2': self.pbzip2,
                 'trim_galore': self.trim_galore, 'cutadapt': self.cutadapt,
                 'fastqc': self.fastqc
@@ -243,23 +242,8 @@ class CalculateTpmWithRsem(RnasaTask):
     def _create_sample_prefix(self):
         return str(
             Path(self.dest_dir_path).resolve().joinpath(
-                'expression/' + self._fetch_fq_id() + '.rsem.star'
+                self.parse_fq_id(self.fq_paths[0]) + '.rsem.star'
             )
-        )
-
-    def _fetch_fq_id(self):
-        fq_stem = Path(self.fq_paths[0]).name
-        for _ in range(3):
-            if fq_stem.endswith(('fq', 'fastq')):
-                fq_stem = Path(fq_stem).stem
-                break
-            else:
-                fq_stem = Path(fq_stem).stem
-        return (
-            re.sub(
-                r'[\._](read[12]|r[12]|[12]|[a-z0-9]+_val_[12]|r[12]_[0-9]+)$',
-                '', fq_stem, flags=re.IGNORECASE
-            ) or fq_stem
         )
 
 

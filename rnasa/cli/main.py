@@ -8,7 +8,7 @@ Usage:
         [--dest-dir=<path>]
     rnasa run [--debug|--info] [--cpus=<int>] [--workers=<int>]
         [--skip-cleaning] [--print-subprocesses] [--seed=<int>]
-        [--skip-adapter-removal] [--skip-bam-qc] [--dest-dir=<path>]
+        [--skip-adapter-removal] [--skip-qc] [--dest-dir=<path>]
         <ref_path_prefix> <fq_path_prefix>...
     rnasa -h|--help
     rnasa --version
@@ -30,7 +30,7 @@ Options:
     --dest-dir=<path>       Specify a destination directory path [default: .]
     --seed=<int>            Set a random seed
     --skip-adapter-removal  Skip adapter removal
-    --skip-bam-qc           Skip BAM QC-checks
+    --skip-qc               Skip QC-checks
 
 Args:
     <ref_path_prefix>       RSEM reference name
@@ -102,7 +102,7 @@ def main():
             'ref_path_prefix': args['<ref_path_prefix>'],
             'dest_dir_path': args['--dest-dir'],
             'adapter_removal': (not args['--skip-adapter-removal']),
-            'seed': args['--seed'],
+            'qc': (not args['--skip-qc']), 'seed': args['--seed'],
             **{
                 c.replace('-', '_').lower(): fetch_executable(c) for c in [
                     'pigz', 'pbzip2', 'trim_galore', 'cutadapt', 'fastqc',
