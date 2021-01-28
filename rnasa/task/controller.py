@@ -60,7 +60,8 @@ class RunRnaseqPipeline(luigi.Task):
     def requires(self):
         dest_dir = Path(self.dest_dir_path).resolve()
         return CalculateTpmWithRsem(
-            fq_paths=self._find_fq_paths(), ref_prefix=self.ref_prefix,
+            fq_paths=self._find_fq_paths(),
+            ref_path_prefix=self.ref_path_prefix,
             dest_dir_path=str(dest_dir.joinpath('rsem')),
             fq_dir_path=str(dest_dir.joinpath('fq')),
             adapter_removal=self.adapter_removal, seed=self.seed,
@@ -72,16 +73,13 @@ class RunRnaseqPipeline(luigi.Task):
         )
 
     def output(self):
+        yield self.input()
         if self.qc:
             qc_dir = Path(self.dest_dir_path).resolve().joinpath('qc')
-            return (
-                luigi.LocalTarget(p) for p in (
-                    [i.path for i in self.input()],
-                    + [qc_dir.joinpath(n) for n in ['fastqc', 'samtools']]
-                )
-            )
-        else:
-            return self.input()
+            yield [
+                luigi.LocalTarget(qc_dir.joinpath(n))
+                for n in ['fastqc', 'samtools']
+            ]
 
     def run(self):
         if self.qc:
@@ -114,7 +112,7 @@ class RunRnaseqPipeline(luigi.Task):
     def _find_fq_paths(self):
         hits = sorted(
             o for o in Path(self.fq_path_prefix).resolve().parent.iterdir()
-            if o.name.startswith(self.fq_path_prefix) and (
+            if o.name.startswith(Path(self.fq_path_prefix).name) and (
                 o.name.endswith(('.fq', '.fastq')) or o.name.endswith(
                     tuple(
                         f'.{a}.{b}' for a, b
@@ -123,7 +121,7 @@ class RunRnaseqPipeline(luigi.Task):
                 )
             )
         )
-        assert bool(hits), 'FASTQ files not found'
+        assert bool(hits), f'FASTQ files not found: {hits}'
         if len(hits) == 1:
             pass
         else:

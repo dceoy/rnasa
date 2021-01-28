@@ -157,7 +157,7 @@ class PrepareRsemReferenceFiles(RnasaTask):
 
 class CalculateTpmWithRsem(RnasaTask):
     fq_paths = luigi.ListParameter()
-    ref_prefix = luigi.Parameter()
+    ref_path_prefix = luigi.Parameter()
     dest_dir_path = luigi.Parameter(default='.')
     fq_dir_path = luigi.Parameter(default='.')
     adapter_removal = luigi.BoolParameter(default=True)
@@ -232,7 +232,7 @@ class CalculateTpmWithRsem(RnasaTask):
                 + (' --paired-end' if is_paired_end else '')
                 + ''.join(
                     f' {f}' for f
-                    in [*input_fqs, self.ref_prefix, sample_prefix]
+                    in [*input_fqs, self.ref_path_prefix, sample_prefix]
                 )
             ),
             input_files_or_dirs=input_fqs,

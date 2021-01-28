@@ -48,7 +48,8 @@ from ftarc.cli.util import (build_luigi_tasks, fetch_executable, print_log,
 from psutil import cpu_count, virtual_memory
 
 from .. import __version__
-from ..task.rsem import PrepareRsemReferenceFiles, RunRnaseqPipeline
+from ..task.controller import RunRnaseqPipeline
+from ..task.rsem import PrepareRsemReferenceFiles
 
 
 def main():
@@ -110,8 +111,8 @@ def main():
                 ]
             },
             'samtools_qc_commands': (
-                list() if args['--skip-bam-qc']
-                else ['coverage', 'flagstat', 'idxstats', 'stats']
+                list() if args['--skip-qc'] else
+                ['coverage', 'flagstat', 'idxstats', 'stats']
             ),
             'n_cpu': max(floor(n_cpu / n_worker), 1),
             'memory_mb': (memory_mb / n_worker),
