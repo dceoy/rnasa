@@ -69,7 +69,10 @@ def main():
     print_log(f'Start the workflow of rnasa {__version__}')
     n_cpu = int(args['--cpus'] or cpu_count())
     sh_config = {
-        'log_dir_path': args['--dest-dir'],
+        'log_dir_path': str(
+            Path(args['--dest-dir']).joinpath('log')
+            if args['run'] else args['--dest-dir']
+        ),
         'remove_if_failed': (not args['--skip-cleaning']),
         'quiet': (not args['--print-subprocesses']),
         'executable': fetch_executable('bash')
@@ -115,8 +118,7 @@ def main():
                 ['coverage', 'flagstat', 'idxstats', 'stats']
             ),
             'n_cpu': max(floor(n_cpu / n_worker), 1),
-            'memory_mb': (memory_mb / n_worker),
-            'sh_config': sh_config,
+            'memory_mb': (memory_mb / n_worker), 'sh_config': sh_config
         }
         build_luigi_tasks(
             tasks=[

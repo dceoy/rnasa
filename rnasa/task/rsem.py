@@ -193,9 +193,11 @@ class CalculateTpmWithRsem(RnasaTask):
         )
 
     def output(self):
-        sample_prefix = self._create_sample_prefix()
+        sample_dir = self._fetch_sample_dir()
         return [
-            luigi.LocalTarget(sample_prefix + e) for e in [
+            luigi.LocalTarget(
+                sample_dir.joinpath(sample_dir.name + '.rsem.star' + e)
+            ) for e in [
                 '.isoforms.results', '.genes.results',
                 '.transcript.sorted.bam', '.transcript.sorted.bam.bai',
                 '.time', '.stat'
@@ -203,8 +205,8 @@ class CalculateTpmWithRsem(RnasaTask):
         ]
 
     def run(self):
-        sample_prefix = self._create_sample_prefix()
-        run_id = Path(sample_prefix).name
+        sample_dir = self._fetch_sample_dir()
+        run_id = sample_dir.name
         self.print_log(f'Calculate TPM values:\t{run_id}')
         input_fqs = [Path(i.path) for i in self.input()]
         is_paired_end = (len(self.fq_paths) > 1)
@@ -212,7 +214,7 @@ class CalculateTpmWithRsem(RnasaTask):
         self.setup_shell(
             run_id=run_id,
             commands=[self.rsem_calculate_expression, self.star],
-            cwd=Path(sample_prefix).parent, **self.sh_config
+            cwd=sample_dir, **self.sh_config
         )
         self.run_shell(
             args=(
@@ -231,19 +233,21 @@ class CalculateTpmWithRsem(RnasaTask):
                 + f' --seed {self.seed}'
                 + (' --paired-end' if is_paired_end else '')
                 + ''.join(
-                    f' {f}' for f
-                    in [*input_fqs, self.ref_path_prefix, sample_prefix]
+                    f' {f}' for f in [
+                        *input_fqs, self.ref_path_prefix,
+                        sample_dir.joinpath(sample_dir.name + '.rsem.star')
+                    ]
                 )
             ),
             input_files_or_dirs=input_fqs,
-            output_files_or_dirs=[o.path for o in self.output()]
+            output_files_or_dirs=[
+                sample_dir, *[o.path for o in self.output()]
+            ]
         )
 
-    def _create_sample_prefix(self):
-        return str(
-            Path(self.dest_dir_path).resolve().joinpath(
-                self.parse_fq_id(self.fq_paths[0]) + '.rsem.star'
-            )
+    def _fetch_sample_dir(self):
+        return Path(self.dest_dir_path).resolve().joinpath(
+            self.parse_fq_id(self.fq_paths[0])
         )
 
 
