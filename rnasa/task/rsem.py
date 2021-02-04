@@ -198,7 +198,7 @@ class CalculateTpmWithRsem(RnasaTask):
             luigi.LocalTarget(
                 sample_dir.joinpath(sample_dir.name + '.rsem.star' + e)
             ) for e in [
-                '.isoforms.results', '.genes.results',
+                '.isoforms.results', '.genes.results', '.transcript.bam',
                 '.transcript.sorted.bam', '.transcript.sorted.bam.bai',
                 '.time', '.stat'
             ]

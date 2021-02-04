@@ -1,7 +1,7 @@
 rnasa
 =====
 
-RNA-seq Data Analyzer
+Gene Expression Analyzer for RNA-seq samples
 
 [![wercker status](https://app.wercker.com/status/a0ed10099e81e5f004b6a5a3d826312b/s/main "wercker status")](https://app.wercker.com/project/byKey/a0ed10099e81e5f004b6a5a3d826312b)
 
@@ -37,5 +37,25 @@ $ docker image pull dceoy/rnasa
 
 Usage
 -----
+
+1.  Download and process resource data.
+
+    ```sh
+    $ rnasa download --genome=GRCh38 --dest-dir=/path/to/ref
+    ```
+
+2.  Run the pipeline for gene expression analysis.
+
+    ```sh
+    $ rnasa run \
+        --workers=2 \
+        --dest-dir=. \
+        /path/to/ref/GRCh38 \
+        /path/to/sample1_fastq_prefix \
+        /path/to/sample2_fastq_prefix \
+        /path/to/sample3_fastq_prefix
+    ```
+
+    The command search for one (single-end) or two (paired-end) input FASTQ files by prefix.
 
 Run `rnasa --help` for more information.

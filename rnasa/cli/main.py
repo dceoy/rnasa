@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-RNA-seq Data Analyzer
+Gene Expression Analyzer for RNA-seq samples
 
 Usage:
     rnasa download [--debug|--info] [--cpus=<int>] [--workers=<int>]
@@ -15,7 +15,7 @@ Usage:
 
 Commands:
     download                Download and process resource data
-    run                     Run the analytical pipeline
+    run                     Run the pipeline for gene expression analysis
 
 Options:
     -h, --help              Print help and exit
@@ -33,8 +33,8 @@ Options:
     --skip-qc               Skip QC-checks
 
 Args:
-    <ref_path_prefix>       RSEM reference name
-    <fq_path_prefix>        Path to a FASTQ file
+    <ref_path_prefix>       Path prefix as an RSEM reference name
+    <fq_path_prefix>        Path prefixes as FASTQ names
 """
 
 import logging

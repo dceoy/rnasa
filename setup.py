@@ -12,7 +12,7 @@ setup(
     version=__version__,
     author='Daichi Narushima',
     author_email='dnarsil+github@gmail.com',
-    description='RNA-seq Data Analyzer',
+    description='Gene Expression Analyzer for RNA-seq samples',
     long_description=long_description,
     long_description_content_type='text/markdown',
     url='https://github.com/dceoy/rnasa',
