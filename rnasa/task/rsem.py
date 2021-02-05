@@ -210,7 +210,8 @@ class CalculateTpmWithRsem(RnasaTask):
         self.print_log(f'Calculate TPM values:\t{run_id}')
         input_fqs = [Path(i.path) for i in self.input()]
         is_paired_end = (len(self.fq_paths) > 1)
-        memory_mb_per_thread = int(self.memory_mb / self.n_cpu)
+        memory_mb_per_thread = int(self.memory_mb / self.n_cpu / 8)
+        ci_memory_mb = int(self.memory_mb)
         self.setup_shell(
             run_id=run_id,
             commands=[self.rsem_calculate_expression, self.star],
@@ -229,7 +230,7 @@ class CalculateTpmWithRsem(RnasaTask):
                 + ' --star-gzipped-read-file'
                 + f' --num-threads {self.n_cpu}'
                 + f' --sort-bam-memory-per-thread {memory_mb_per_thread}M'
-                + f' --ci-memory {memory_mb_per_thread}'
+                + f' --ci-memory {ci_memory_mb}'
                 + f' --seed {self.seed}'
                 + (' --paired-end' if is_paired_end else '')
                 + ''.join(
