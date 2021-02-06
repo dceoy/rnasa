@@ -73,35 +73,37 @@ class RunRnaseqPipeline(luigi.Task):
         )
 
     def output(self):
-        yield self.input()
         if self.qc:
             qc_dir = Path(self.dest_dir_path).resolve().joinpath('qc')
-            yield [
-                luigi.LocalTarget(qc_dir.joinpath(n))
-                for n in ['fastqc', 'samtools']
-            ]
+            return (
+                [luigi.LocalTarget(i.path) for i in self.input()] + [
+                    luigi.LocalTarget(qc_dir.joinpath(n))
+                    for n in ['fastqc', 'samtools']
+                ]
+            )
+        else:
+            return self.input()
 
     def run(self):
         if self.qc:
             dest_dir = Path(self.dest_dir_path).resolve()
-            fq_dir = dest_dir.joinpath('fq')
-            output_fq_paths = (
-                [
-                    str(o) for o in fq_dir.iterdir()
-                    if o.name.endswith(('.fq.gz', '.fastq.gz'))
-                ] if fq_dir.is_dir() else list()
-            )
             yield [
                 CollectFqMetricsWithFastqc(
-                    input_fq_paths=(output_fq_paths or self._find_fq_paths()),
+                    input_fq_paths=[
+                        i.path for i in self.input()
+                        if i.path.endswith(('.fq.gz', '.fastq.gz'))
+                    ],
                     dest_dir_path=f'{dest_dir}/qc/fastqc', fastqc=self.fastqc,
                     n_cpu=self.n_cpu, memory_mb=self.memory_mb,
                     sh_config=self.sh_config
                 ),
                 *[
                     CollectSamMetricsWithSamtools(
-                        input_sam_path=self.input_sam_path, fa_path='',
-                        dest_dir_path=f'{dest_dir}/qc/samtools',
+                        input_sam_path=[
+                            o.path for o in self.output()
+                            if o.path.endswith('.transcript.sorted.bam')
+                        ][0],
+                        fa_path='', dest_dir_path=f'{dest_dir}/qc/samtools',
                         samtools_commands=[c], samtools=self.samtools,
                         pigz=self.pigz, n_cpu=self.n_cpu,
                         sh_config=self.sh_config
