@@ -10,12 +10,14 @@ Usage:
         [--skip-cleaning] [--print-subprocesses] [--seed=<int>]
         [--skip-adapter-removal] [--skip-qc] [--dest-dir=<path>]
         <ref_path_prefix> <fq_path_prefix>...
+    rnasa extract [--debug|--info] [--dest-dir=<path>] <search_dir_path>
     rnasa -h|--help
     rnasa --version
 
 Commands:
     download                Download and process resource data
     run                     Run the pipeline for gene expression analysis
+    extract                 Extract TPM values from genes results files
 
 Options:
     -h, --help              Print help and exit
@@ -35,6 +37,7 @@ Options:
 Args:
     <ref_path_prefix>       Path prefix as an RSEM reference name
     <fq_path_prefix>        Path prefixes as FASTQ names
+    <search_dir_path>       Path to search for RSEM genes results files
 """
 
 import logging
@@ -50,6 +53,7 @@ from psutil import cpu_count, virtual_memory
 from .. import __version__
 from ..task.controller import PrintEnvVersions, RunRnaseqPipeline
 from ..task.rsem import PrepareRsemReferenceFiles
+from .tpm import extract_tpm_values
 
 
 def main():
@@ -106,7 +110,7 @@ def main():
         )
         kwargs = {
             'ref_path_prefix': args['<ref_path_prefix>'],
-            'dest_dir_path': args['--dest-dir'],
+            'dest_dir_path': str(dest_dir),
             'adapter_removal': (not args['--skip-adapter-removal']),
             'qc': (not args['--skip-qc']), 'seed': args['--seed'],
             **command_dict,
@@ -147,6 +151,11 @@ def main():
             ],
             workers=n_worker, log_level=console_log_level,
             logging_conf_file=log_cfg_path
+        )
+    elif args['extract']:
+        extract_tpm_values(
+            search_dir_path=args['<search_dir_path>'],
+            dest_dir_path=str(dest_dir)
         )
 
 
