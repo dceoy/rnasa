@@ -37,7 +37,7 @@ Options:
 Args:
     <ref_path_prefix>       Path prefix as an RSEM reference name
     <fq_path_prefix>        Path prefixes as FASTQ names
-    <search_dir_path>       Path to search for RSEM genes results files
+    <search_dir_path>       Path to search for RSEM results files
 """
 
 import logging
