@@ -9,7 +9,7 @@ import pandas as pd
 from ftarc.cli.util import print_log
 
 
-def extract_tpm_values(search_dir_path, dest_dir_path='.'):
+def extract_tpm_values(search_dir_path, dest_dir_path='.', gct=False):
     for t in ['genes', 'isoforms']:
         print_log(f'Find RSEM {t} results files:\t{search_dir_path}')
         logger = logging.getLogger(__name__)
@@ -27,11 +27,15 @@ def extract_tpm_values(search_dir_path, dest_dir_path='.'):
                 logger.debug(f'df_new:{os.linesep}{df_new}')
                 df = (df.join(df_new, how='outer') if df.size else df_new)
             logger.debug(f'df:{os.linesep}{df}')
+            ext = ('GCT' if gct else 'TSV')
             output_tsv = Path(dest_dir_path).resolve().joinpath(
-                f'{search_dir.name}.{t}.tpm.tsv.txt'
+                f'{search_dir.name}.{t}.tpm.{ext.lower()}'
             )
-            print_log(f'Write {t} TPM values into a file:\t{output_tsv}')
-            df.to_csv(output_tsv, sep='\t')
+            print_log(f'Write {t} TPM values into a {ext} file:\t{output_tsv}')
+            with open(output_tsv, mode='w') as f:
+                if gct:
+                    f.write('#1.2{0}{1}\t{2}{0}'.format(os.linesep, *df.shape))
+                df.to_csv(f, sep='\t')
         else:
             print_log(f'{t.capitalize()} results files are not found.')
 

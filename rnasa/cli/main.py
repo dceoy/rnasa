@@ -10,14 +10,15 @@ Usage:
         [--skip-cleaning] [--print-subprocesses] [--seed=<int>]
         [--skip-adapter-removal] [--skip-qc] [--dest-dir=<path>]
         <ref_path_prefix> <fq_path_prefix>...
-    rnasa extract [--debug|--info] [--dest-dir=<path>] <search_dir_path>
+    rnasa extract [--debug|--info] [--gct] [--dest-dir=<path>]
+        <search_dir_path>
     rnasa -h|--help
     rnasa --version
 
 Commands:
     download                Download and process resource data
     run                     Run the pipeline for gene expression analysis
-    extract                 Extract TPM values from genes results files
+    extract                 Extract TPM values from RSEM results files
 
 Options:
     -h, --help              Print help and exit
@@ -33,6 +34,7 @@ Options:
     --seed=<int>            Set a random seed
     --skip-adapter-removal  Skip adapter removal
     --skip-qc               Skip QC-checks
+    --gct                   Write expression data in GCT format
 
 Args:
     <ref_path_prefix>       Path prefix as an RSEM reference name
@@ -155,7 +157,7 @@ def main():
     elif args['extract']:
         extract_tpm_values(
             search_dir_path=args['<search_dir_path>'],
-            dest_dir_path=str(dest_dir)
+            dest_dir_path=str(dest_dir), gct=args['--gct']
         )
 
 
