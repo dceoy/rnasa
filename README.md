@@ -4,6 +4,7 @@ rnasa
 Gene Expression Analyzer for RNA-seq samples
 
 [![wercker status](https://app.wercker.com/status/a0ed10099e81e5f004b6a5a3d826312b/s/main "wercker status")](https://app.wercker.com/project/byKey/a0ed10099e81e5f004b6a5a3d826312b)
+![Upload Python Package](https://github.com/dceoy/rnasa/workflows/Upload%20Python%20Package/badge.svg)
 
 Installation
 ------------
