@@ -162,6 +162,8 @@ class CalculateTpmWithRsem(RnasaTask):
     fq_dir_path = luigi.Parameter(default='.')
     adapter_removal = luigi.BoolParameter(default=True)
     seed = luigi.IntParameter(default=randint(0, 2147483647))
+    sort_bam = luigi.BoolParameter(default=False)
+    estimate_rspd = luigi.BoolParameter(default=False)
     pigz = luigi.Parameter(default='pigz')
     pbzip2 = luigi.Parameter(default='pbzip2')
     trim_galore = luigi.Parameter(default='trim_galore')
@@ -197,11 +199,14 @@ class CalculateTpmWithRsem(RnasaTask):
         return (
             [
                 luigi.LocalTarget(
-                    sample_dir.joinpath(sample_dir.name + '.rsem.star' + e)
+                    sample_dir.joinpath(f'{sample_dir.name}.rsem.star.{e}')
                 ) for e in [
-                    '.isoforms.results', '.genes.results', '.transcript.bam',
-                    '.transcript.sorted.bam', '.transcript.sorted.bam.bai',
-                    '.time', '.stat'
+                    'isoforms.results', 'genes.results', 'transcript.bam',
+                    'time', 'stat',
+                    *(
+                        ['transcript.sorted.bam', 'transcript.sorted.bam.bai']
+                        if self.sort_bam else list()
+                    )
                 ]
             ] + [luigi.LocalTarget(i.path) for i in self.input()]
         )
@@ -212,8 +217,6 @@ class CalculateTpmWithRsem(RnasaTask):
         self.print_log(f'Calculate TPM values:\t{run_id}')
         input_fqs = [Path(i.path) for i in self.input()]
         is_paired_end = (len(self.fq_paths) > 1)
-        memory_mb_per_thread = int(self.memory_mb / self.n_cpu / 8)
-        ci_memory_mb = int(self.memory_mb)
         self.setup_shell(
             run_id=run_id,
             commands=[self.rsem_calculate_expression, self.star],
@@ -223,17 +226,20 @@ class CalculateTpmWithRsem(RnasaTask):
             args=(
                 f'set -e && {self.rsem_calculate_expression}'
                 + ' --star'
-                + ' --estimate-rspd'
-                + ' --append-names'
-                + ' --sort-bam-by-coordinate'
-                + ' --calc-pme'
-                + ' --calc-ci'
-                + ' --time'
                 + ' --star-gzipped-read-file'
+                + f' --star-path {self.star}'
                 + f' --num-threads {self.n_cpu}'
-                + f' --sort-bam-memory-per-thread {memory_mb_per_thread}M'
-                + f' --ci-memory {ci_memory_mb}'
                 + f' --seed {self.seed}'
+                + ' --time'
+                + (' --estimate-rspd' if self.estimate_rspd else '')
+                + (
+                    (
+                        ' --sort-bam-by-coordinate'
+                        + ' --sort-bam-memory-per-thread {}M'.format(
+                            int(self.memory_mb / self.n_cpu / 8)
+                        )
+                    ) if self.sort_bam else ''
+                )
                 + (' --paired-end' if is_paired_end else '')
                 + ''.join(
                     f' {f}' for f in [

@@ -101,8 +101,8 @@ class RunRnaseqPipeline(luigi.Task):
                     CollectSamMetricsWithSamtools(
                         input_sam_path=[
                             o.path for o in self.output()
-                            if o.path.endswith('.transcript.sorted.bam')
-                        ][0],
+                            if o.path.endswith('.bam')
+                        ][-1],
                         fa_path='', dest_dir_path=f'{dest_dir}/qc/samtools',
                         samtools_commands=[c], samtools=self.samtools,
                         pigz=self.pigz, n_cpu=self.n_cpu,
