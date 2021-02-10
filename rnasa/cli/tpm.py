@@ -11,7 +11,7 @@ from ftarc.cli.util import print_log
 
 def extract_tpm_values(search_dir_path, dest_dir_path='.', gct=False):
     for t in ['genes', 'isoforms']:
-        print_log(f'Find RSEM {t} results files:\t{search_dir_path}')
+        print_log(f'Search for RSEM {t} results files:\t{search_dir_path}')
         logger = logging.getLogger(__name__)
         search_dir = Path(search_dir_path).resolve()
         input_tsv_paths = _find_file_paths_by_suffix(
@@ -37,7 +37,7 @@ def extract_tpm_values(search_dir_path, dest_dir_path='.', gct=False):
                     f.write('#1.2{0}{1}\t{2}{0}'.format(os.linesep, *df.shape))
                 df.to_csv(f, sep='\t')
         else:
-            print_log(f'{t.capitalize()} results files are not found.')
+            logger.warning(f'RSEM {t} results files not found')
 
 
 def _find_file_paths_by_suffix(search_dir_path, file_suffix):

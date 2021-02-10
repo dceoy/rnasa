@@ -227,7 +227,6 @@ class CalculateTpmWithRsem(RnasaTask):
                 f'set -e && {self.rsem_calculate_expression}'
                 + ' --star'
                 + ' --star-gzipped-read-file'
-                + f' --star-path {self.star}'
                 + f' --num-threads {self.n_cpu}'
                 + f' --seed {self.seed}'
                 + ' --time'

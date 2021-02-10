@@ -46,6 +46,7 @@ import logging
 import os
 from math import floor
 from pathlib import Path
+from random import randint
 
 from docopt import docopt
 from ftarc.cli.util import (build_luigi_tasks, fetch_executable, print_log,
@@ -114,7 +115,8 @@ def main():
             'ref_path_prefix': args['<ref_path_prefix>'],
             'dest_dir_path': str(dest_dir),
             'adapter_removal': (not args['--skip-adapter-removal']),
-            'qc': (not args['--skip-qc']), 'seed': args['--seed'],
+            'qc': (not args['--skip-qc']),
+            'seed': int(args['--seed'] or randint(0, 2147483647)),
             **command_dict,
             'samtools_qc_commands': (
                 list() if args['--skip-qc'] else
@@ -125,10 +127,21 @@ def main():
         }
         print_log(f'Analyze gene expressions:\t{dest_dir}')
         print_yml([
-            {'workers': n_worker}, {'runs': n_sample},
-            {'adapter_removal': kwargs['adapter_removal']},
-            {'reference': args['<ref_path_prefix>']},
-            {'samples': args['<fq_path_prefix>']}
+            {
+                'config': [
+                    {'adapter_removal': kwargs['adapter_removal']},
+                    {'qc': kwargs['qc']}, {'seed': kwargs['seed']},
+                    {'n_worker': n_worker}, {'n_cpu': kwargs['n_cpu']},
+                    {'memory_mb': kwargs['memory_mb']}
+                ]
+            },
+            {
+                'input': [
+                    {'n_sample': n_sample},
+                    {'reference': args['<ref_path_prefix>']},
+                    {'samples': args['<fq_path_prefix>']}
+                ]
+            }
         ])
         log_cfg_path = str(log_dir.joinpath('luigi.log.cfg'))
         render_luigi_log_cfg(
