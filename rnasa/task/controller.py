@@ -77,35 +77,41 @@ class RunRnaseqPipeline(luigi.Task):
     def output(self):
         if self.qc:
             qc_dir = Path(self.dest_dir_path).resolve().joinpath('qc')
-            return (
-                [luigi.LocalTarget(i.path) for i in self.input()] + [
-                    luigi.LocalTarget(qc_dir.joinpath(n))
-                    for n in ['fastqc', 'samtools']
-                ]
-            )
+            input_files = [Path(i.path) for i in self.input()]
+            return [
+                luigi.LocalTarget(o) for o in (
+                    input_files + [
+                        qc_dir.joinpath(n).joinpath(input_files[0].parent.name)
+                        for n in ['fastqc', 'samtools']
+                    ]
+                )
+            ]
         else:
             return self.input()
 
     def run(self):
         if self.qc:
-            dest_dir = Path(self.dest_dir_path).resolve()
+            input_files = [Path(i.path) for i in self.input()]
+            sample_name = input_files[0].parent.name
+            qc_dir = Path(self.dest_dir_path).resolve()
             yield [
                 CollectFqMetricsWithFastqc(
                     input_fq_paths=[
-                        i.path for i in self.input()
-                        if i.path.endswith(('.fq.gz', '.fastq.gz'))
+                        str(o) for o in input_files
+                        if o.name.endswith(('.fq.gz', '.fastq.gz'))
                     ],
-                    dest_dir_path=f'{dest_dir}/qc/fastqc', fastqc=self.fastqc,
-                    n_cpu=self.n_cpu, memory_mb=self.memory_mb,
-                    sh_config=self.sh_config
+                    dest_dir_path=f'{qc_dir}/qc/fastqc/{sample_name}',
+                    fastqc=self.fastqc, n_cpu=self.n_cpu,
+                    memory_mb=self.memory_mb, sh_config=self.sh_config
                 ),
                 *[
                     CollectSamMetricsWithSamtools(
                         input_sam_path=[
-                            o.path for o in self.output()
-                            if o.path.endswith('.bam')
+                            str(o) for o in input_files
+                            if o.name.endswith('.bam')
                         ][-1],
-                        fa_path='', dest_dir_path=f'{dest_dir}/qc/samtools',
+                        fa_path='',
+                        dest_dir_path=f'{qc_dir}/qc/samtools/{sample_name}',
                         samtools_commands=[c], samtools=self.samtools,
                         plot_bamstats=self.plot_bamstats, gnuplot=self.gnuplot,
                         n_cpu=self.n_cpu, sh_config=self.sh_config

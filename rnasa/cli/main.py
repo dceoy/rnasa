@@ -118,8 +118,8 @@ def main():
             'seed': int(args['--seed'] or randint(0, 2147483647)),
             **command_dict,
             'samtools_qc_commands': (
-                list() if args['--skip-qc'] else
-                ['coverage', 'flagstat', 'idxstats', 'stats']
+                list() if args['--skip-qc']
+                else ['coverage', 'flagstat', 'stats']
             ),
             'n_cpu': max(floor(n_cpu / n_worker), 1),
             'memory_mb': (memory_mb / n_worker), 'sh_config': sh_config
