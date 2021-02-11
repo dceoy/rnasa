@@ -3,9 +3,8 @@
 Gene Expression Analyzer for RNA-seq samples
 
 Usage:
-    rnasa download [--debug|--info] [--cpus=<int>] [--workers=<int>]
-        [--skip-cleaning] [--print-subprocesses] [--genome=<ver>]
-        [--dest-dir=<path>]
+    rnasa download [--debug|--info] [--cpus=<int>] [--skip-cleaning]
+        [--print-subprocesses] [--genome=<ver>] [--dest-dir=<path>]
     rnasa run [--debug|--info] [--cpus=<int>] [--workers=<int>]
         [--skip-cleaning] [--print-subprocesses] [--seed=<int>]
         [--skip-adapter-removal] [--skip-qc] [--dest-dir=<path>]
@@ -25,12 +24,12 @@ Options:
     --version               Print version and exit
     --debug, --info         Execute a command with debug|info messages
     --cpus=<int>            Limit CPU cores used
-    --workers=<int>         Specify the maximum number of workers [default: 1]
     --skip-cleaning         Skip incomlete file removal when a task fails
     --print-subprocesses    Print STDOUT/STDERR outputs from subprocesses
     --genome=<ver>          Specify the genome version [default: GRCh38]
                             { GRCh38, GRCh37, GRCm39, GRCm38 }
     --dest-dir=<path>       Specify a destination directory path [default: .]
+    --workers=<int>         Specify the maximum number of workers [default: 1]
     --seed=<int>            Set a random seed
     --skip-adapter-removal  Skip adapter removal
     --skip-qc               Skip QC-checks
@@ -158,8 +157,8 @@ def main():
                     sh_config=sh_config
                 )
             ],
-            workers=1, log_level=console_log_level,
-            logging_conf_file=log_cfg_path, hide_summary=True
+            log_level=console_log_level, logging_conf_file=log_cfg_path,
+            hide_summary=True
         )
         build_luigi_tasks(
             tasks=[
