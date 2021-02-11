@@ -202,7 +202,7 @@ class CalculateTpmWithRsem(RnasaTask):
                     sample_dir.joinpath(f'{sample_dir.name}.rsem.star.{e}')
                 ) for e in [
                     'isoforms.results', 'genes.results', 'transcript.bam',
-                    'time', 'stat',
+                    'stat', 'time', 'log',
                     *(
                         ['transcript.sorted.bam', 'transcript.sorted.bam.bai']
                         if self.sort_bam else list()

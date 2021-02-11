@@ -109,7 +109,7 @@ def main():
         n_worker = min(int(args['--workers']), n_cpu, n_sample)
         command_dict = _generate_command_dict(
             'pigz', 'pbzip2', 'trim_galore', 'cutadapt', 'fastqc', 'STAR',
-            'rsem-calculate-expression', 'samtools'
+            'rsem-calculate-expression', 'samtools', 'plot-bamstats', 'gnuplot'
         )
         kwargs = {
             'ref_path_prefix': args['<ref_path_prefix>'],
@@ -151,7 +151,10 @@ def main():
         build_luigi_tasks(
             tasks=[
                 PrintEnvVersions(
-                    command_paths=list(command_dict.values()),
+                    command_paths=[
+                        p for p in command_dict.values()
+                        if p != 'plot-bamstats'
+                    ],
                     sh_config=sh_config
                 )
             ],

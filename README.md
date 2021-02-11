@@ -10,7 +10,7 @@ Installation
 ------------
 
 ```sh
-$ pip install -U https://github.com/dceoy/rnasa/archive/main.tar.gz
+$ pip install -U rnasa
 ```
 
 Dependent commands:

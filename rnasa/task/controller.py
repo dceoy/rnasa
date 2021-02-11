@@ -39,6 +39,9 @@ class RunRnaseqPipeline(luigi.Task):
     adapter_removal = luigi.BoolParameter(default=True)
     qc = luigi.BoolParameter(default=True)
     seed = luigi.IntParameter(default=randint(0, 2147483647))
+    samtools_qc_commands = luigi.ListParameter(
+        default=['coverage', 'flagstat', 'stats']
+    )
     pigz = luigi.Parameter(default='pigz')
     pbzip2 = luigi.Parameter(default='pbzip2')
     trim_galore = luigi.Parameter(default='trim_galore')
@@ -49,9 +52,8 @@ class RunRnaseqPipeline(luigi.Task):
         default='rsem-calculate-expression'
     )
     samtools = luigi.Parameter(default='samtools')
-    samtools_qc_commands = luigi.ListParameter(
-        default=['coverage', 'flagstat', 'idxstats', 'stats']
-    )
+    plot_bamstats = luigi.Parameter(default='plot-bamstats')
+    gnuplot = luigi.Parameter(default='gnuplot')
     n_cpu = luigi.IntParameter(default=1)
     memory_mb = luigi.FloatParameter(default=4096)
     sh_config = luigi.DictParameter(default=dict())
@@ -105,8 +107,8 @@ class RunRnaseqPipeline(luigi.Task):
                         ][-1],
                         fa_path='', dest_dir_path=f'{dest_dir}/qc/samtools',
                         samtools_commands=[c], samtools=self.samtools,
-                        pigz=self.pigz, n_cpu=self.n_cpu,
-                        sh_config=self.sh_config
+                        plot_bamstats=self.plot_bamstats, gnuplot=self.gnuplot,
+                        n_cpu=self.n_cpu, sh_config=self.sh_config
                     ) for c in self.samtools_qc_commands
                 ]
             ]

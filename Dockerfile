@@ -65,9 +65,9 @@ RUN set -e \
       && apt-get -y update \
       && apt-get -y dist-upgrade \
       && apt-get -y install --no-install-recommends --no-install-suggests \
-        apt-transport-https apt-utils ca-certificates curl libcurl3-gnutls \
-        libgomp1 libncurses5 libtbb2 openjdk-8-jre pbzip2 perl pigz python3 \
-        python3-distutils wget \
+        apt-transport-https apt-utils ca-certificates curl gnuplot \
+        libcurl3-gnutls libgomp1 libncurses5 libtbb2 openjdk-8-jre pbzip2 \
+        perl pigz python3 python3-distutils wget \
       && apt-get -y autoremove \
       && apt-get clean \
       && rm -rf /var/lib/apt/lists/*
