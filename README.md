@@ -48,7 +48,7 @@ Usage
 2.  Run the pipeline for gene expression analysis.
 
     ```sh
-    $ rnasa run \
+    $ rnasa calculate \
         --workers=2 \
         --dest-dir=. \
         /path/to/ref/GRCh38 \

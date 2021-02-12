@@ -5,7 +5,7 @@ Gene Expression Analyzer for RNA-seq samples
 Usage:
     rnasa download [--debug|--info] [--cpus=<int>] [--skip-cleaning]
         [--print-subprocesses] [--genome=<ver>] [--dest-dir=<path>]
-    rnasa run [--debug|--info] [--cpus=<int>] [--workers=<int>]
+    rnasa calculate [--debug|--info] [--cpus=<int>] [--workers=<int>]
         [--skip-cleaning] [--print-subprocesses] [--seed=<int>]
         [--sort-bam] [--skip-adapter-removal] [--skip-qc] [--dest-dir=<path>]
         <ref_path_prefix> <fq_path_prefix>...
@@ -16,7 +16,7 @@ Usage:
 
 Commands:
     download                Download and process resource data
-    run                     Run the pipeline for gene expression analysis
+    calculate               Calculate TPM (transcripts per million) values
     extract                 Extract TPM values from RSEM results files
 
 Options:
@@ -76,7 +76,7 @@ def main():
     print_log(f'Start the workflow of rnasa {__version__}')
     n_cpu = int(args['--cpus'] or cpu_count())
     dest_dir = Path(args['--dest-dir']).resolve()
-    log_dir = (dest_dir.joinpath('log') if args['run'] else dest_dir)
+    log_dir = (dest_dir.joinpath('log') if args['calculate'] else dest_dir)
     sh_config = {
         'log_dir_path': str(log_dir),
         'remove_if_failed': (not args['--skip-cleaning']),
@@ -103,7 +103,7 @@ def main():
             ],
             log_level=console_log_level
         )
-    elif args['run']:
+    elif args['calculate']:
         n_sample = len(args['<fq_path_prefix>'])
         memory_mb = virtual_memory().total / 1024 / 1024 / 2
         n_worker = min(int(args['--workers']), n_cpu, n_sample)
