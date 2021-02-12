@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """
-Gene Expression Analyzer for RNA-seq samples
+Gene Expression Level Calculator for RNA-seq
 
 Usage:
     rnasa download [--debug|--info] [--cpus=<int>] [--skip-cleaning]
