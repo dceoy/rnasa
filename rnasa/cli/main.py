@@ -7,7 +7,7 @@ Usage:
         [--print-subprocesses] [--genome=<ver>] [--dest-dir=<path>]
     rnasa run [--debug|--info] [--cpus=<int>] [--workers=<int>]
         [--skip-cleaning] [--print-subprocesses] [--seed=<int>]
-        [--skip-adapter-removal] [--skip-qc] [--dest-dir=<path>]
+        [--sort-bam] [--skip-adapter-removal] [--skip-qc] [--dest-dir=<path>]
         <ref_path_prefix> <fq_path_prefix>...
     rnasa extract [--debug|--info] [--gct] [--dest-dir=<path>]
         <search_dir_path>
@@ -31,6 +31,7 @@ Options:
     --dest-dir=<path>       Specify a destination directory path [default: .]
     --workers=<int>         Specify the maximum number of workers [default: 1]
     --seed=<int>            Set a random seed
+    --sort-bam              Sort output BAM files by coordinate
     --skip-adapter-removal  Skip adapter removal
     --skip-qc               Skip QC-checks
     --gct                   Write expression data in GCT format
@@ -112,14 +113,16 @@ def main():
         )
         kwargs = {
             'ref_path_prefix': args['<ref_path_prefix>'],
-            'dest_dir_path': str(dest_dir),
+            'dest_dir_path': str(dest_dir), 'sort_bam': args['--sort-bam'],
             'adapter_removal': (not args['--skip-adapter-removal']),
             'qc': (not args['--skip-qc']),
             'seed': int(args['--seed'] or randint(0, 2147483647)),
             **command_dict,
             'samtools_qc_commands': (
-                list() if args['--skip-qc']
-                else ['coverage', 'flagstat', 'stats']
+                list() if args['--skip-qc'] else [
+                    'coverage', 'flagstat', 'stats',
+                    *(['idxstats'] if args['--sort-bam'] else list())
+                ]
             ),
             'n_cpu': max(floor(n_cpu / n_worker), 1),
             'memory_mb': (memory_mb / n_worker), 'sh_config': sh_config
@@ -129,8 +132,9 @@ def main():
             {
                 'config': [
                     {'adapter_removal': kwargs['adapter_removal']},
-                    {'qc': kwargs['qc']}, {'seed': kwargs['seed']},
-                    {'n_worker': n_worker}, {'n_cpu': kwargs['n_cpu']},
+                    {'sort_bam': kwargs['sort_bam']}, {'qc': kwargs['qc']},
+                    {'seed': kwargs['seed']}, {'n_worker': n_worker},
+                    {'n_cpu': kwargs['n_cpu']},
                     {'memory_mb': kwargs['memory_mb']}
                 ]
             },
@@ -151,8 +155,8 @@ def main():
             tasks=[
                 PrintEnvVersions(
                     command_paths=[
-                        p for p in command_dict.values()
-                        if p != 'plot-bamstats'
+                        v for k, v in command_dict.items()
+                        if k != 'plot_bamstats'
                     ],
                     sh_config=sh_config
                 )

@@ -39,6 +39,7 @@ class RunRnaseqPipeline(luigi.Task):
     adapter_removal = luigi.BoolParameter(default=True)
     qc = luigi.BoolParameter(default=True)
     seed = luigi.IntParameter(default=randint(0, 2147483647))
+    sort_bam = luigi.BoolParameter(default=False)
     samtools_qc_commands = luigi.ListParameter(
         default=['coverage', 'flagstat', 'stats']
     )
@@ -67,8 +68,9 @@ class RunRnaseqPipeline(luigi.Task):
             dest_dir_path=str(dest_dir.joinpath('rsem')),
             fq_dir_path=str(dest_dir.joinpath('fq')),
             adapter_removal=self.adapter_removal, seed=self.seed,
-            pigz=self.pigz, pbzip2=self.pbzip2, trim_galore=self.trim_galore,
-            cutadapt=self.cutadapt, fastqc=self.fastqc, star=self.star,
+            sort_bam=self.sort_bam, pigz=self.pigz, pbzip2=self.pbzip2,
+            trim_galore=self.trim_galore, cutadapt=self.cutadapt,
+            fastqc=self.fastqc, star=self.star,
             rsem_calculate_expression=self.rsem_calculate_expression,
             n_cpu=self.n_cpu, memory_mb=self.memory_mb,
             sh_config=self.sh_config
