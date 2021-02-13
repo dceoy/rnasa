@@ -24,7 +24,7 @@ Dependent commands:
 - `trim_galore`
 - `STAR`
 - `rsem-prepare-reference`
-- `rsem-refseq-extract-primary-assembly` (for human data)
+- `rsem-refseq-extract-primary-assembly`
 - `rsem-calculate-expression`
 
 Docker image

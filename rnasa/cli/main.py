@@ -96,7 +96,9 @@ def main():
                     dest_dir_path=args['--dest-dir'],
                     genome_version=args['--genome'],
                     **_generate_command_dict(
-                        'wget', 'pigz', 'STAR', 'rsem-calculate-expression'
+                        'wget', 'pigz', 'STAR', 'rsem-prepare-reference',
+                        'rsem-refseq-extract-primary-assembly',
+                        'rsem-calculate-expression'
                     ),
                     n_cpu=n_cpu, sh_config=sh_config
                 )
@@ -109,7 +111,8 @@ def main():
         n_worker = min(int(args['--workers']), n_cpu, n_sample)
         command_dict = _generate_command_dict(
             'pigz', 'pbzip2', 'trim_galore', 'cutadapt', 'fastqc', 'STAR',
-            'rsem-calculate-expression', 'samtools', 'plot-bamstats', 'gnuplot'
+            'rsem-calculate-expression', 'samtools',
+            *(list() if args['--skip-qc'] else ['plot-bamstats', 'gnuplot'])
         )
         kwargs = {
             'ref_path_prefix': args['<ref_path_prefix>'],

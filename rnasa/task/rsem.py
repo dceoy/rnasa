@@ -49,6 +49,10 @@ class PrepareRsemReferenceFiles(RnasaTask):
     wget = luigi.Parameter(default='wget')
     pigz = luigi.Parameter(default='pigz')
     star = luigi.Parameter(default='STAR')
+    rsem_prepare_reference = luigi.Parameter(default='rsem-prepare-reference')
+    rsem_refseq_extract_primary_assembly = luigi.Parameter(
+        default='rsem-refseq-extract-primary-assembly'
+    )
     rsem_calculate_expression = luigi.Parameter(
         default='rsem-calculate-expression'
     )
@@ -94,11 +98,6 @@ class PrepareRsemReferenceFiles(RnasaTask):
         gtf = dest_dir.joinpath(
             gtf_gz.stem if gtf_gz.suffix == '.gz' else gtf_gz.name
         )
-        bin_dir = Path(self.rsem_calculate_expression).resolve().parent
-        rsem_refseq_extract_primary_assembly = bin_dir.joinpath(
-            'rsem-refseq-extract-primary-assembly'
-        )
-        rsem_prepare_reference = bin_dir.joinpath('rsem-prepare-reference')
         tmp_dir = dest_dir.joinpath(f'{self.genome_version}.rsem.star')
         self.setup_shell(
             run_id=run_id,
@@ -119,7 +118,8 @@ class PrepareRsemReferenceFiles(RnasaTask):
             self.run_shell(
                 args=(
                     f'set -e && {sys.executable}'
-                    + f' {rsem_refseq_extract_primary_assembly} {fna} {pa_fna}'
+                    + f' {self.rsem_refseq_extract_primary_assembly}'
+                    + f' {fna} {pa_fna}'
                 ),
                 input_files_or_dirs=fna, output_files_or_dirs=pa_fna
             )
@@ -128,7 +128,7 @@ class PrepareRsemReferenceFiles(RnasaTask):
         self.run_shell(args=f'mkdir {tmp_dir}', output_files_or_dirs=tmp_dir)
         self.run_shell(
             args=(
-                f'set -e && {rsem_prepare_reference}'
+                f'set -e && {self.rsem_prepare_reference}'
                 + ' --star'
                 + f' --num-threads {self.n_cpu}'
                 + f' --gtf {gtf}'
