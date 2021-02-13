@@ -18,13 +18,13 @@ Dependent commands:
 - `pigz`
 - `pbzip2`
 - `bgzip`
-- `samtools`
+- `samtools` (and `plot-bamstats`)
 - `java`
 - `fastqc`
 - `trim_galore`
 - `STAR`
-- `rsem-refseq-extract-primary-assembly`
 - `rsem-prepare-reference`
+- `rsem-refseq-extract-primary-assembly` (for human data)
 - `rsem-calculate-expression`
 
 Docker image
