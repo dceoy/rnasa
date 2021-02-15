@@ -21,7 +21,7 @@ def extract_tpm_values(search_dir_path, dest_dir_path='.', gct=False):
         if input_tsv_paths:
             _validate_filenames(paths=input_tsv_paths)
             df = pd.DataFrame()
-            for p in input_tsv_paths:
+            for p in sorted(input_tsv_paths):
                 logger.info(f'Read a TSV file: {p}')
                 df_new = _extract_tpm_from_rsem_tsv(path=p)
                 logger.debug(f'df_new:{os.linesep}{df_new}')
