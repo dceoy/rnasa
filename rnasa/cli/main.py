@@ -9,8 +9,8 @@ Usage:
         [--skip-cleaning] [--print-subprocesses] [--seed=<int>]
         [--sort-bam] [--skip-adapter-removal] [--skip-qc] [--dest-dir=<path>]
         <ref_path_prefix> <fq_path_prefix>...
-    rnasa extract [--debug|--info] [--gct] [--dest-dir=<path>]
-        <search_dir_path>
+    rnasa extract [--debug|--info] [--gct] [--name-prefix=<str>]
+        [--dest-dir=<path>] <search_dir_path>
     rnasa -h|--help
     rnasa --version
 
@@ -35,6 +35,7 @@ Options:
     --skip-adapter-removal  Skip adapter removal
     --skip-qc               Skip QC-checks
     --gct                   Write expression data in GCT format
+    --name-prefix=<str>     Specify a output name prefix [default: samples]
 
 Args:
     <ref_path_prefix>       Path prefix as an RSEM reference name
@@ -179,7 +180,8 @@ def main():
     elif args['extract']:
         extract_tpm_values(
             search_dir_path=args['<search_dir_path>'],
-            dest_dir_path=str(dest_dir), gct=args['--gct']
+            dest_dir_path=str(dest_dir), gct=args['--gct'],
+            name_prefix=args['--name-prefix']
         )
 
 

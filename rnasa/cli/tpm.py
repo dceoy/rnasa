@@ -9,11 +9,13 @@ import pandas as pd
 from ftarc.cli.util import print_log
 
 
-def extract_tpm_values(search_dir_path, dest_dir_path='.', gct=False):
+def extract_tpm_values(search_dir_path, dest_dir_path='.', gct=False,
+                       name_prefix=None):
+    logger = logging.getLogger(__name__)
+    search_dir = Path(search_dir_path).resolve()
+    output_name_prefix = (name_prefix or search_dir.name)
     for t in ['genes', 'isoforms']:
         print_log(f'Search for RSEM {t} results files:\t{search_dir_path}')
-        logger = logging.getLogger(__name__)
-        search_dir = Path(search_dir_path).resolve()
         input_tsv_paths = _find_file_paths_by_suffix(
             search_dir_path=str(search_dir), file_suffix=f'{t}.results'
         )
@@ -29,7 +31,7 @@ def extract_tpm_values(search_dir_path, dest_dir_path='.', gct=False):
             logger.debug(f'df:{os.linesep}{df}')
             ext = ('GCT' if gct else 'TSV')
             output_tsv = Path(dest_dir_path).resolve().joinpath(
-                f'{search_dir.name}.{t}.tpm.{ext.lower()}'
+                f'{output_name_prefix}.{t}.tpm.{ext.lower()}'
             )
             print_log(f'Write {t} TPM values into a {ext} file:\t{output_tsv}')
             with open(output_tsv, mode='w') as f:
