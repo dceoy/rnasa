@@ -3,8 +3,9 @@ rnasa
 
 Gene Expression Level Calculator for RNA-seq
 
-![Test](https://github.com/dceoy/rnasa/workflows/Test/badge.svg)
-![Upload Python Package](https://github.com/dceoy/rnasa/workflows/Upload%20Python%20Package/badge.svg)
+[![Test](https://github.com/dceoy/rnasa/actions/workflows/test.yml/badge.svg)](https://github.com/dceoy/rnasa/actions/workflows/test.yml)
+[![Upload Python Package](https://github.com/dceoy/rnasa/actions/workflows/python-publish.yml/badge.svg)](https://github.com/dceoy/rnasa/actions/workflows/python-publish.yml)
+[![CI to Docker Hub](https://github.com/dceoy/rnasa/actions/workflows/docker-publish.yml/badge.svg)](https://github.com/dceoy/rnasa/actions/workflows/docker-publish.yml)
 
 Installation
 ------------
