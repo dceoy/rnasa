@@ -20,7 +20,7 @@ RUN set -e \
       && apt-get -y install --no-install-recommends --no-install-suggests \
         g++ gcc libbz2-dev libcurl4-gnutls-dev liblzma-dev libncurses5-dev \
         libssl-dev libtbb-dev libz-dev make perl perl-doc pkg-config \
-        python3-dev python3-distutils \
+        python3-dev python3-distutils xxd \
       && apt-get -y autoremove \
       && apt-get clean \
       && rm -rf /var/lib/apt/lists/*
