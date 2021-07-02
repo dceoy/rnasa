@@ -8,7 +8,6 @@ COPY --from=dceoy/trim_galore:latest /usr/local/src/TrimGalore /usr/local/src/Tr
 COPY --from=dceoy/rsem:latest /usr/local/src/STAR /usr/local/src/STAR
 COPY --from=dceoy/rsem:latest /usr/local/src/RSEM /usr/local/src/RSEM
 ADD https://bootstrap.pypa.io/get-pip.py /tmp/get-pip.py
-ADD https://raw.githubusercontent.com/dceoy/print-github-tags/master/print-github-tags /usr/local/bin/print-github-tags
 ADD . /tmp/rnasa
 
 RUN set -e \
