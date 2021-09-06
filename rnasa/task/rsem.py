@@ -6,7 +6,7 @@ from random import randint
 from socket import gethostname
 
 import luigi
-from ftarc.task.trimgalore import PrepareFastqs
+from ftarc.task.controller import PrepareFastqs
 
 from .core import RnasaTask
 
@@ -183,15 +183,11 @@ class CalculateTpmWithRsem(RnasaTask):
         return PrepareFastqs(
             fq_paths=self.fq_paths,
             sample_name=self.parse_fq_id(self.fq_paths[0]),
-            cf={
-                'adapter_removal': self.adapter_removal,
-                'trim_dir_path': fq_dir_path, 'align_dir_path': fq_dir_path,
-                'pigz': self.pigz, 'pbzip2': self.pbzip2,
-                'trim_galore': self.trim_galore, 'cutadapt': self.cutadapt,
-                'fastqc': self.fastqc
-            },
-            n_cpu=self.n_cpu, memory_mb=self.memory_mb,
-            sh_config=self.sh_config
+            trim_dir_path=fq_dir_path, align_dir_path=fq_dir_path,
+            pigz=self.pigz, pbzip2=self.pbzip2, trim_galore=self.trim_galore,
+            cutadapt=self.cutadapt, fastqc=self.fastqc,
+            adapter_removal=self.adapter_removal, n_cpu=self.n_cpu,
+            memory_mb=self.memory_mb, sh_config=self.sh_config
         )
 
     def output(self):

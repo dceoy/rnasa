@@ -98,7 +98,7 @@ class RunRnaseqPipeline(luigi.Task):
             qc_dir = Path(self.dest_dir_path).resolve()
             yield [
                 CollectFqMetricsWithFastqc(
-                    input_fq_paths=[
+                    fq_paths=[
                         str(o) for o in input_files
                         if o.name.endswith(('.fq.gz', '.fastq.gz'))
                     ],
@@ -108,7 +108,7 @@ class RunRnaseqPipeline(luigi.Task):
                 ),
                 *[
                     CollectSamMetricsWithSamtools(
-                        input_sam_path=[
+                        sam_path=[
                             str(o) for o in input_files
                             if o.name.endswith('.bam')
                         ][-1],
