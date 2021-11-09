@@ -57,6 +57,7 @@ class PrepareRsemReferenceFiles(RnasaTask):
         default='rsem-calculate-expression'
     )
     perl = luigi.Parameter(default='perl')
+    add_prepare_reference_args = luigi.ListParameter(default=list())
     n_cpu = luigi.IntParameter(default=1)
     sh_config = luigi.DictParameter(default=dict())
     priority = 100
@@ -130,8 +131,9 @@ class PrepareRsemReferenceFiles(RnasaTask):
             args=(
                 f'set -e && {self.rsem_prepare_reference}'
                 + ' --star'
-                + f' --num-threads {self.n_cpu}'
                 + f' --gtf {gtf}'
+                + f' --num-threads {self.n_cpu}'
+                + ''.join(f' {a}' for a in self.add_prepare_reference_args)
                 + f' {pa_fna}'
                 + ' {}'.format(tmp_dir.joinpath(self.genome_version))
             ),
@@ -163,7 +165,6 @@ class CalculateTpmWithRsem(RnasaTask):
     adapter_removal = luigi.BoolParameter(default=True)
     seed = luigi.IntParameter(default=randint(0, 2147483647))
     sort_bam = luigi.BoolParameter(default=False)
-    estimate_rspd = luigi.BoolParameter(default=False)
     pigz = luigi.Parameter(default='pigz')
     pbzip2 = luigi.Parameter(default='pbzip2')
     trim_galore = luigi.Parameter(default='trim_galore')
@@ -173,6 +174,7 @@ class CalculateTpmWithRsem(RnasaTask):
     rsem_calculate_expression = luigi.Parameter(
         default='rsem-calculate-expression'
     )
+    add_calculate_expression_args = luigi.ListParameter(default=['--time'])
     n_cpu = luigi.IntParameter(default=1)
     memory_mb = luigi.FloatParameter(default=4096)
     sh_config = luigi.DictParameter(default=dict())
@@ -221,12 +223,9 @@ class CalculateTpmWithRsem(RnasaTask):
         self.run_shell(
             args=(
                 f'set -e && {self.rsem_calculate_expression}'
-                + ' --star'
-                + ' --star-gzipped-read-file'
+                + ' --star --star-gzipped-read-file'
                 + f' --num-threads {self.n_cpu}'
                 + f' --seed {self.seed}'
-                + ' --time'
-                + (' --estimate-rspd' if self.estimate_rspd else '')
                 + (
                     (
                         ' --sort-bam-by-coordinate'
@@ -236,6 +235,7 @@ class CalculateTpmWithRsem(RnasaTask):
                     ) if self.sort_bam else ''
                 )
                 + (' --paired-end' if is_paired_end else '')
+                + ''.join(f' {a}' for a in self.add_calculate_expression_args)
                 + ''.join(
                     f' {f}' for f in [
                         *input_fqs, self.ref_path_prefix,
