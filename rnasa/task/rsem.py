@@ -11,7 +11,7 @@ from ftarc.task.controller import PrepareFastqs
 from .core import RnasaTask
 
 
-class DownloadReferenceFiles(RnasaTask):
+class FetchReferenceFiles(RnasaTask):
     src_urls = luigi.ListParameter()
     dest_dir_path = luigi.Parameter(default='.')
     use_local_files = luigi.BoolParameter(default=False)
@@ -29,7 +29,10 @@ class DownloadReferenceFiles(RnasaTask):
 
     def run(self):
         dest_dir = Path(self.dest_dir_path).resolve()
-        self.print_log(f'Download reference files:\t{dest_dir}')
+        self.print_log(
+            ('Copy' if self.use_local_files else 'Download')
+            + f' reference files:\t{dest_dir}'
+        )
         self.setup_shell(
             run_id=self.run_id, commands=self.wget, cwd=dest_dir,
             **self.sh_config
@@ -37,7 +40,7 @@ class DownloadReferenceFiles(RnasaTask):
         for u in self.src_urls:
             o = dest_dir.joinpath(Path(u).name)
             if self.use_local_files:
-                args = 'set -e && cp {s} {o}'.format(s=Path(u).resolve(), o=o)
+                args = 'set -e && cp {0} {1}'.format(Path(u).resolve(), o)
             else:
                 args = f'set -e && {self.wget} -qSL -O {o} {u}'
             self.run_shell(args=args, output_files_or_dirs=o)
@@ -66,7 +69,7 @@ class PrepareRsemReferenceFiles(RnasaTask):
     priority = 100
 
     def requires(self):
-        return DownloadReferenceFiles(
+        return FetchReferenceFiles(
             src_urls=[self.fna_url, self.gtf_url],
             dest_dir_path=self.dest_dir_path,
             use_local_files=self.use_local_files, wget=self.wget,
