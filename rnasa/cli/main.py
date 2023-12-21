@@ -4,8 +4,8 @@ Gene Expression Level Calculator for RNA-seq
 
 Usage:
     rnasa preprocess [--debug|--info] [--cpus=<int>] [--skip-cleaning]
-        [--print-subprocesses] [--dest-dir=<path>] <genoimc_fna_path>
-        <genomic_gtf_path>
+        [--print-subprocesses] [--genome=<ver>] [--dest-dir=<path>]
+        <genoimc_fna_path> <genomic_gtf_path>
     rnasa download [--debug|--info] [--cpus=<int>] [--skip-cleaning]
         [--print-subprocesses] [--genome=<ver>] [--dest-dir=<path>]
     rnasa calculate [--debug|--info] [--cpus=<int>] [--workers=<int>]
@@ -30,9 +30,9 @@ Options:
     --cpus=<int>            Limit CPU cores used
     --skip-cleaning         Skip incomlete file removal when a task fails
     --print-subprocesses    Print STDOUT/STDERR outputs from subprocesses
-    --dest-dir=<path>       Specify a destination directory path [default: .]
     --genome=<ver>          Specify the genome version [default: GRCh38]
                             { GRCh38, GRCh37, GRCm39, GRCm38 }
+    --dest-dir=<path>       Specify a destination directory path [default: .]
     --workers=<int>         Specify the maximum number of workers [default: 1]
     --seed=<int>            Set a random seed
     --sort-bam              Sort output BAM files by coordinate
