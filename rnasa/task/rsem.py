@@ -37,7 +37,7 @@ class DownloadReferenceFiles(RnasaTask):
         for u in self.src_urls:
             o = dest_dir.joinpath(Path(u).name)
             if self.use_local_files:
-                args = f'set -e && cp {u} {o}'
+                args = 'set -e && cp {s} {o}'.format(s=Path(u).resolve(), o=o)
             else:
                 args = f'set -e && {self.wget} -qSL -O {o} {u}'
             self.run_shell(args=args, output_files_or_dirs=o)
@@ -242,7 +242,7 @@ class CalculateTpmWithRsem(RnasaTask):
                 + ''.join(f' {a}' for a in self.add_calculate_expression_args)
                 + ''.join(
                     f' {f}' for f in [
-                        *input_fqs, self.ref_path_prefix,
+                        *input_fqs, Path(self.ref_path_prefix).resolve(),
                         sample_dir.joinpath(sample_dir.name + '.rsem.star')
                     ]
                 )
