@@ -3,6 +3,9 @@
 Gene Expression Level Calculator for RNA-seq
 
 Usage:
+    rnasa preprocess [--debug|--info] [--cpus=<int>] [--skip-cleaning]
+        [--print-subprocesses] [--dest-dir=<path>] <genoimc_fna_path>
+        <genomic_gtf_path>
     rnasa download [--debug|--info] [--cpus=<int>] [--skip-cleaning]
         [--print-subprocesses] [--genome=<ver>] [--dest-dir=<path>]
     rnasa calculate [--debug|--info] [--cpus=<int>] [--workers=<int>]
@@ -15,6 +18,7 @@ Usage:
     rnasa --version
 
 Commands:
+    preprocess              Process resource data
     download                Download and process resource data
     calculate               Calculate TPM (transcripts per million) values
     extract                 Extract TPM values from RSEM results files
@@ -26,9 +30,9 @@ Options:
     --cpus=<int>            Limit CPU cores used
     --skip-cleaning         Skip incomlete file removal when a task fails
     --print-subprocesses    Print STDOUT/STDERR outputs from subprocesses
+    --dest-dir=<path>       Specify a destination directory path [default: .]
     --genome=<ver>          Specify the genome version [default: GRCh38]
                             { GRCh38, GRCh37, GRCm39, GRCm38 }
-    --dest-dir=<path>       Specify a destination directory path [default: .]
     --workers=<int>         Specify the maximum number of workers [default: 1]
     --seed=<int>            Set a random seed
     --sort-bam              Sort output BAM files by coordinate
@@ -38,6 +42,8 @@ Options:
     --name-prefix=<str>     Specify a output name prefix [default: samples]
 
 Args:
+    <genoimc_fna_path>      Path to a genomic FASTA file
+    <genomic_gtf_path>      Path to a genomic GTF file
     <ref_path_prefix>       Path prefix as an RSEM reference name
     <fq_path_prefix>        Path prefixes as FASTQ names
     <search_dir_path>       Path to search for RSEM results files
@@ -84,11 +90,17 @@ def main():
         'quiet': (not args['--print-subprocesses']),
         'executable': fetch_executable('bash')
     }
-    if args['download']:
-        url_dict = read_yml(
-            path=Path(__file__).parent.parent.joinpath('static/urls.yml')
-        ).get(args['--genome'])
-        assert bool(url_dict), 'unsupprted genome version'
+    if args['preprocess'] or args['download']:
+        if args['preprocess']:
+            url_dict = {
+                'genomic_fna': args['<genoimc_fna_path>'],
+                'genomic_gtf': args['<genomic_gtf_path>']
+            }
+        else:
+            url_dict = read_yml(
+                path=Path(__file__).parent.parent.joinpath('static/urls.yml')
+            ).get(args['--genome'])
+            assert bool(url_dict), 'unsupprted genome version'
         build_luigi_tasks(
             tasks=[
                 PrepareRsemReferenceFiles(
@@ -186,4 +198,4 @@ def main():
 
 
 def _generate_command_dict(*cmds):
-    return({c.replace('-', '_').lower(): fetch_executable(c) for c in cmds})
+    return {c.replace('-', '_').lower(): fetch_executable(c) for c in cmds}
