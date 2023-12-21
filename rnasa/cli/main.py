@@ -107,6 +107,7 @@ def main():
                     fna_url=url_dict['genomic_fna'],
                     gtf_url=url_dict['genomic_gtf'],
                     dest_dir_path=args['--dest-dir'],
+                    use_local_files=args['preprocess'],
                     genome_version=args['--genome'],
                     **_generate_command_dict(
                         'wget', 'pigz', 'STAR', 'rsem-prepare-reference',

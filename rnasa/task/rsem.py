@@ -14,6 +14,7 @@ from .core import RnasaTask
 class DownloadReferenceFiles(RnasaTask):
     src_urls = luigi.ListParameter()
     dest_dir_path = luigi.Parameter(default='.')
+    use_local_files = luigi.BoolParameter(default=False)
     run_id = luigi.Parameter(default=gethostname())
     wget = luigi.Parameter(default='wget')
     sh_config = luigi.DictParameter(default=dict())
@@ -35,16 +36,18 @@ class DownloadReferenceFiles(RnasaTask):
         )
         for u in self.src_urls:
             o = dest_dir.joinpath(Path(u).name)
-            self.run_shell(
-                args=f'set -e && {self.wget} -qSL -O {o} {u}',
-                output_files_or_dirs=o
-            )
+            if self.use_local_files:
+                args = f'set -e && cp {u} {o}'
+            else:
+                args = f'set -e && {self.wget} -qSL -O {o} {u}'
+            self.run_shell(args=args, output_files_or_dirs=o)
 
 
 class PrepareRsemReferenceFiles(RnasaTask):
     fna_url = luigi.Parameter()
     gtf_url = luigi.Parameter()
     dest_dir_path = luigi.Parameter(default='.')
+    use_local_files = luigi.BoolParameter(default=False)
     genome_version = luigi.Parameter(default='GRCh38')
     wget = luigi.Parameter(default='wget')
     pigz = luigi.Parameter(default='pigz')
@@ -65,7 +68,8 @@ class PrepareRsemReferenceFiles(RnasaTask):
     def requires(self):
         return DownloadReferenceFiles(
             src_urls=[self.fna_url, self.gtf_url],
-            dest_dir_path=self.dest_dir_path, wget=self.wget,
+            dest_dir_path=self.dest_dir_path,
+            use_local_files=self.use_local_files, wget=self.wget,
             sh_config=self.sh_config
         )
 
